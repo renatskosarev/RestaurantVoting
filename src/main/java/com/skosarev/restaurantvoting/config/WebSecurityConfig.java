@@ -22,11 +22,12 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/api/auth/signup").permitAll()
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/dishes").hasRole("ADMIN")
-                        .requestMatchers("/api/dishes/history").hasRole("ADMIN")
+                        .requestMatchers("/api/profile").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/restaurants").authenticated()
                         .requestMatchers("/api/restaurants/**").hasRole("ADMIN")
                         .requestMatchers("/api/people/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/dishes").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/votes").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 ).csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(Customizer.withDefaults());

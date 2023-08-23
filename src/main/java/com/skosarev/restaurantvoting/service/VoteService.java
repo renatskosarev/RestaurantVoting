@@ -1,8 +1,6 @@
 package com.skosarev.restaurantvoting.service;
 
 import com.skosarev.restaurantvoting.dto.VoteDTO;
-import com.skosarev.restaurantvoting.model.Person;
-import com.skosarev.restaurantvoting.model.Restaurant;
 import com.skosarev.restaurantvoting.model.Vote;
 import com.skosarev.restaurantvoting.repository.VoteRepository;
 import org.modelmapper.ModelMapper;
@@ -15,22 +13,26 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
 public class VoteService {
     private final VoteRepository voteRepository;
+    private final RestaurantService restaurantService;
     private final ModelMapper modelMapper;
 
     @Autowired
-    public VoteService(VoteRepository voteRepository, ModelMapper modelMapper) {
+    public VoteService(VoteRepository voteRepository, RestaurantService restaurantService, ModelMapper modelMapper) {
         this.voteRepository = voteRepository;
+        this.restaurantService = restaurantService;
         this.modelMapper = modelMapper;
     }
 
     @Transactional
     public VoteDTO create(VoteDTO voteDTO) {
         Vote vote = convertToVote(voteDTO);
+        vote.setRestaurant(restaurantService.get(voteDTO.getRestaurantId()));
         vote.setDate(new Date());
 
         // check if user already voted
@@ -43,7 +45,7 @@ public class VoteService {
     }
 
     @Transactional
-    public VoteDTO update(VoteDTO updatedVoteDTO, Restaurant restaurant) {
+    public VoteDTO update(VoteDTO updatedVoteDTO, int restaurantId) {
         Vote updatedVote = convertToVote(updatedVoteDTO);
 
         Vote voteToBeUpdated = voteRepository.findVoteByPersonAndDate(updatedVote.getPerson(), new Date()).orElseThrow(
@@ -51,13 +53,19 @@ public class VoteService {
         );
         checkTimeIsBefore11am();
 
-
-        voteToBeUpdated.setRestaurant(restaurant);
+        voteToBeUpdated.setRestaurant(restaurantService.get(restaurantId));
         return convertToDTO(voteToBeUpdated);
     }
 
-    public List<VoteDTO> getAll(Person person) {
-        return voteRepository.findAllByPerson(person)
+    public List<VoteDTO> getAll(Optional<Integer> restaurantId) {
+        List<Vote> votes = restaurantId.isEmpty() ? voteRepository.findAll() :
+                voteRepository.findAllByRestaurant(restaurantService.get(restaurantId.get()));
+
+        return votes.stream().map(this::convertToDTO).toList();
+    }
+
+    public List<VoteDTO> getAllByPersonEmail(String email) {
+        return voteRepository.findAllByPersonEmail(email)
                 .stream().map(this::convertToDTO).toList();
     }
 
@@ -71,7 +79,7 @@ public class VoteService {
 
     private void checkTimeIsBefore11am() {
         if (LocalTime.now().isAfter(LocalTime.of(11, 0))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't change vote after 11am");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't vote after 11am");
         }
     }
 }

@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
@@ -26,21 +27,34 @@ public class DishService {
         this.modelMapper = modelMapper;
     }
 
-    public List<DishDTO> getAllActual(Integer restaurantId) {
-        // возвращает список доступных (актуальных) блюд
-        if (restaurantId == null) {
-            return dishRepository.findAllByDateAfterOrderByDate(convertToDate(LocalDate.now()))
-                    .stream().map(this::convertToDTO).toList();
+
+    /**
+     * Returns a list of available (actual) dishes.
+     * @param restaurantId an optional parameter representing the ID of a restaurant (default is empty)
+     * @return a list of DishDTO objects representing the available dishes
+     */
+    public List<DishDTO> getAllActual(Optional<Integer> restaurantId) {
+        List<Dish> dishes;
+        if (restaurantId.isEmpty()) {
+            dishes = dishRepository.findAllByDateAfterOrderByDate(convertToDate(LocalDate.now()));
+        } else {
+            Restaurant restaurant = restaurantService.get(restaurantId.get());
+            dishes = dishRepository.findAllByDateAfterAndRestaurantOrderByDate(convertToDate(LocalDate.now()), restaurant);
         }
 
-        Restaurant restaurant = restaurantService.get(restaurantId);
-        return dishRepository.findAllByDateAfterAndRestaurantOrderByDate(convertToDate(LocalDate.now()), restaurant)
-                .stream().map(this::convertToDTO).toList();
+        return dishes.stream().map(this::convertToDTO).toList();
     }
 
-    public List<DishDTO> getHistoryByRestaurant(int restaurantId) {
-        return dishRepository.findAllByRestaurant(restaurantService.get(restaurantId))
-                .stream().map(this::convertToDTO).toList();
+    public List<DishDTO> getHistory(Optional<Integer> restaurantId) {
+        List<Dish> dishes;
+        if (restaurantId.isEmpty()) {
+            dishes = dishRepository.findAllByOrderByDate();
+        } else {
+            Restaurant restaurant = restaurantService.get(restaurantId.get());
+            dishes = dishRepository.findAllByRestaurantOrderByDate(restaurant);
+        }
+
+        return dishes.stream().map(this::convertToDTO).toList();
     }
 
     @Transactional

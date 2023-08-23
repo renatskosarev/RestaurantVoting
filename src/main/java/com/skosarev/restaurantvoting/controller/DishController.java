@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/dishes")
@@ -20,13 +21,13 @@ public class DishController {
     }
 
     @GetMapping
-    public ResponseEntity<List<DishDTO>> getAll(@RequestParam(value = "restaurantId", required = false) Integer restaurantId) {
+    public ResponseEntity<List<DishDTO>> getAll(@RequestParam(value = "restaurantId") Optional<Integer> restaurantId) {
         return ResponseEntity.ok(dishService.getAllActual(restaurantId));
     }
 
     @GetMapping("/history")
-    public ResponseEntity<List<DishDTO>> getHistory(@RequestParam("restaurantId") int restaurantId) {
-        return ResponseEntity.ok(dishService.getHistoryByRestaurant(restaurantId));
+    public ResponseEntity<List<DishDTO>> getHistory(@RequestParam(value = "restaurantId") Optional<Integer> restaurantId) {
+        return ResponseEntity.ok(dishService.getHistory(restaurantId));
     }
 
     @PostMapping

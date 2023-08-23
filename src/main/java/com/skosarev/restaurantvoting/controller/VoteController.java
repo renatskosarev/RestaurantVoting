@@ -1,9 +1,7 @@
 package com.skosarev.restaurantvoting.controller;
 
 import com.skosarev.restaurantvoting.dto.VoteDTO;
-import com.skosarev.restaurantvoting.model.Person;
 import com.skosarev.restaurantvoting.service.PersonService;
-import com.skosarev.restaurantvoting.service.RestaurantService;
 import com.skosarev.restaurantvoting.service.VoteService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,25 +11,23 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/votes")
 public class VoteController {
     private final VoteService voteService;
     private final PersonService personService;
-    private final RestaurantService restaurantService;
 
     @Autowired
-    public VoteController(VoteService voteService, PersonService personService, RestaurantService restaurantService) {
+    public VoteController(VoteService voteService, PersonService personService) {
         this.voteService = voteService;
         this.personService = personService;
-        this.restaurantService = restaurantService;
     }
 
     @GetMapping
-    public ResponseEntity<List<VoteDTO>> getAll(@AuthenticationPrincipal UserDetails details) {
-        Person person = personService.getByEmail(details.getUsername());
-        return ResponseEntity.ok(voteService.getAll(person));
+    public ResponseEntity<List<VoteDTO>> getAll(@RequestParam("restaurantId") Optional<Integer> restaurantId) {
+        return ResponseEntity.ok(voteService.getAll(restaurantId));
     }
 
     @PostMapping
@@ -45,8 +41,6 @@ public class VoteController {
     public ResponseEntity<VoteDTO> changeVote(@RequestBody @Valid VoteDTO voteDTO,
                                         @AuthenticationPrincipal UserDetails details) {
         voteDTO.setPersonId(personService.getIdByEmail(details.getUsername()));
-
-        VoteDTO temp = voteService.update(voteDTO, restaurantService.get(voteDTO.getRestaurantId()));
-        return ResponseEntity.ok(temp);
+        return ResponseEntity.ok(voteService.update(voteDTO, voteDTO.getRestaurantId()));
     }
 }

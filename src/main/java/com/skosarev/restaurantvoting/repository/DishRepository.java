@@ -14,5 +14,7 @@ public interface DishRepository extends JpaRepository<Dish, Integer> {
 
     List<Dish> findAllByDateAfterAndRestaurantOrderByDate(Date date, Restaurant restaurant);
 
-    List<Dish> findAllByRestaurant(Restaurant restaurant);
+    List<Dish> findAllByRestaurantOrderByDate(Restaurant restaurant);
+
+    List<Dish> findAllByOrderByDate();
 }
