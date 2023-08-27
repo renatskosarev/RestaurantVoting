@@ -24,7 +24,6 @@ public class DishDTO {
     private int price;
 
     @NotNull(message = "Date should be not null")
-    @Pattern(regexp = "\\d\\d-\\d\\d-\\d\\d\\d\\d", message = "Date should be in dd-MM-yyyy format")
     @JsonFormat(pattern = "dd-MM-yyyy")
     private Date date;
 
